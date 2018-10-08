@@ -37,6 +37,7 @@ const debug = false;
   const headless = !(debug === true)
   const browser = await puppeteer.launch({
     headless: headless
+    //executablePath: 'google-chrome-unstable'
   })
   const page = await browser.newPage()
   const tracker = new InflightRequests(page);
