@@ -9,7 +9,7 @@
   "author": "Daniel T. Morgan",
   "license": "ISC",
   "dependencies": {
-    "puppeteer": "^1.12.2"
+    "puppeteer": "^1.19.0"
   },
   "devDependencies": {
     "eslint": "^5.13.0",
