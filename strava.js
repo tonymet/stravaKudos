@@ -36,6 +36,7 @@ const debug = false;
 (async () => {
   const headless = !(debug === true)
   const browser = await puppeteer.launch({
+    executablePath: '/usr/bin/chromium',
     headless: headless,
     args: [
       // Required for Docker version of Puppeteer
