@@ -34,13 +34,11 @@ const puppeteer = require('puppeteer')
 const debug = false;
 
 (async () => {
-  const headless = !(debug === true)
+  const headless = !(debug === false)
   const browser = await puppeteer.launch({
-    executablePath: '/usr/bin/chromium',
     headless: headless,
     args: [
       // Required for Docker version of Puppeteer
-      '--no-sandbox',
       '--disable-setuid-sandbox',
       // This will write shared memory files into /tmp instead of /dev/shm,
       // because Docker’s default for /dev/shm is 64MB
