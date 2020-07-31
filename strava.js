@@ -30,6 +30,8 @@ class InflightRequests {
   }
 }
 
+require('console-stamp')(console, '[HH:MM:ss.l]');
+
 const puppeteer = require('puppeteer')
 const debug = false;
 
@@ -49,22 +51,47 @@ const debug = false;
   const page = await browser.newPage()
   const tracker = new InflightRequests(page);
 
+  const chalk = require('chalk')
+  page
+    .on('console', message => {
+      const type = message.type().substr(0, 3).toUpperCase()
+      const colors = {
+        LOG: text => text,
+        ERR: chalk.red,
+        WAR: chalk.yellow,
+        INF: chalk.cyan
+      }
+      const color = colors[type] || chalk.blue
+      console.log(color(`${type} ${message.text()}`))
+    })
+    .on('pageerror', ({ message }) => console.log(chalk.red(message)))
+    .on('response', response =>
+      console.log(chalk.green(`${response.status()} ${response.url()}`)))
+    .on('requestfailed', request =>
+      console.log(chalk.magenta(`${request.failure().errorText} ${request.url()}`)))
+
   try {
     await page.goto('https://www.strava.com/login').catch(e => {
       console.log('Navigation failed: ' + e.message);
       const inflight = tracker.inflightRequests();
-      console.log(inflight.map(request => '  ' + request.url()).join('\n'));
+      console.log(inflight.map(request => '  ' + request.url()).join('\n'))
     });
     tracker.dispose();
-    await page.click('#email')
+    console.log('Got to strava')
 
+    await page.click('#email')
     await page.keyboard.type(process.env.STRAVA_USER)
+    console.log('Entered Username')
+
 
     await page.click('#password')
     await page.keyboard.type(process.env.STRAVA_PWD)
+    console.log('Entered Password')
 
     await page.$eval('#login_form', form => form.submit())
+    console.log('Submitted Form')
     await new Promise(resolve => setTimeout(resolve, 20000))
+    console.log('Waited Now Navigating')
 
     await page.goto('https://www.strava.com/dashboard/following/300', {waitUntil: 'networkidle2',
       timeout: 3000000}).catch(e => {
@@ -75,19 +102,31 @@ const debug = false;
       tracker.dispose();
 
     await new Promise(resolve => setTimeout(resolve, 20000))
-  
 
+
+    console.log('Lets Click Some Buttons')
+    page.on('console', msg => {
+      for (let i = 0; i < msg.args.length; ++i)
+        console.log(`${i}: ${msg.args[i]}`);
+    });
+    let howManyClicked = 0
     await page.evaluate(() => {
       const kudosButtons = Array.from(document.querySelectorAll('button.js-add-kudo'))
       for (let i = 0; i < kudosButtons.length; i++) {
         try {
+          console.log("clicking", $i)
+          howManyClicked++
           kudosButtons[i].click()
         } catch (error) {
           console.log(error)
         }
       }
     })
+    await new Promise(resolve => setTimeout(resolve, 5000))
+    console.log(howManyClicked)
     if (debug === true) {
+      console.log('taking a screenshot')
+      await new Promise(resolve => setTimeout(resolve, 20000))
       await page.screenshot({ path: 'strava.png', fullPage: true })
       await new Promise(resolve => setTimeout(resolve, 2000))
     }

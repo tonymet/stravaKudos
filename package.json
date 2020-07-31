@@ -1,6 +1,6 @@
 {
   "name": "StravaKudos",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Logs into Strava and gives kudos to your followers.",
   "main": "strava.js",
   "scripts": {
@@ -9,6 +9,8 @@
   "author": "Daniel T. Morgan",
   "license": "ISC",
   "dependencies": {
-    "puppeteer": "^3.3.0"
+    "chalk": "^4.1.0",
+    "console-stamp": "^0.2.9",
+    "puppeteer": "^5.2.0"
   }
 }
