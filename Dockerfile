@@ -25,5 +25,6 @@ USER pptruser
 COPY strava.js strava.js
 ENV STRAVA_USER="user@email.com"
 ENV STRAVA_PWD="password"
+ENV TERM xterm-256color
 
 CMD ["node", "strava.js"]
