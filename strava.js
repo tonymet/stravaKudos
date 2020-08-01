@@ -33,6 +33,8 @@ class InflightRequests {
 require('console-stamp')(console, '[HH:MM:ss.l]');
 
 const puppeteer = require('puppeteer')
+const chalk = require('chalk')
+
 const debug = false;
 
 (async () => {
@@ -51,7 +53,7 @@ const debug = false;
   const page = await browser.newPage()
   const tracker = new InflightRequests(page);
 
-  const chalk = require('chalk')
+
   page
     .on('console', async msg => {
       const args = await msg.args()
@@ -72,7 +74,7 @@ const debug = false;
           }
           const color = colors[colorType] || chalk.blue
           console.log(color(`type: ${type}, subtype: ${subtype}, description:\n ${description}`))
-        }
+        }const chalk = require('chalk')
       })
     })
     .on('pageerror', ({ message }) => console.log(chalk.red(message)))
@@ -121,7 +123,7 @@ const debug = false;
       const kudosButtons = Array.from(document.querySelectorAll('button.js-add-kudo'))
       for (let i = 0; i < kudosButtons.length; i++) {
         try {
-          console.log(chalk.orange(`clicking {i}`))
+          console.log(`clicking ${i}`)
           howManyClicked++
           kudosButtons[i].click()
         } catch (error) {
