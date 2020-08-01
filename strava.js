@@ -53,16 +53,27 @@ const debug = false;
 
   const chalk = require('chalk')
   page
-    .on('console', message => {
-      const type = message.type().substr(0, 3).toUpperCase()
-      const colors = {
-        LOG: text => text,
-        ERR: chalk.red,
-        WAR: chalk.yellow,
-        INF: chalk.cyan
-      }
-      const color = colors[type] || chalk.blue
-      console.log(color(`${type} ${message.text()}`))
+    .on('console', async msg => {
+      const args = await msg.args()
+
+      args.forEach(async (arg) => {
+        const val = await arg.jsonValue()
+        // value is serializable
+        if (JSON.stringify(val) !== JSON.stringify({})) console.log(val)
+        // value is unserializable (or an empty oject)
+        else {
+          const { type, subtype, description } = arg._remoteObject
+          const colorType = subtype.substr(0, 3).toUpperCase()
+          const colors = {
+            LOG: text => text,
+            ERR: chalk.red,
+            WAR: chalk.yellow,
+            INF: chalk.cyan
+          }
+          const color = colors[colorType] || chalk.blue
+          console.log(color(`type: ${type}, subtype: ${subtype}, description:\n ${description}`))
+        }
+      })
     })
     .on('pageerror', ({ message }) => console.log(chalk.red(message)))
     .on('response', response =>
@@ -105,30 +116,25 @@ const debug = false;
 
 
     console.log('Lets Click Some Buttons')
-    page.on('console', msg => {
-      for (let i = 0; i < msg.args.length; ++i)
-        console.log(`${i}: ${msg.args[i]}`);
-    });
-    let howManyClicked = 0
     await page.evaluate(() => {
+      let howManyClicked = 0
       const kudosButtons = Array.from(document.querySelectorAll('button.js-add-kudo'))
       for (let i = 0; i < kudosButtons.length; i++) {
         try {
-          console.log("clicking", $i)
+          console.log(chalk.orange(`clicking {i}`))
           howManyClicked++
           kudosButtons[i].click()
         } catch (error) {
           console.log(error)
         }
       }
+      console.log(howManyClicked)
     })
-    await new Promise(resolve => setTimeout(resolve, 5000))
-    console.log(howManyClicked)
     if (debug === true) {
       console.log('taking a screenshot')
-      await new Promise(resolve => setTimeout(resolve, 20000))
+      await new Promise(resolve => setTimeout(resolve, 5000))
       await page.screenshot({ path: 'strava.png', fullPage: true })
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      await new Promise(resolve => setTimeout(resolve, 5000))
     }
   } catch (error) {
     console.log(error)
