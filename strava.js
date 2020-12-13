@@ -65,7 +65,8 @@ require('console-stamp')(console, '[HH:MM:ss.l]');
 
 const puppeteer = require('puppeteer')
 const request_client = require('request-promise-native');
-const chalk = require('chalk')
+const chalk = require('chalk');
+const userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36'
 
 const debug = false;
 
@@ -81,7 +82,8 @@ const debug = false;
       // This will write shared memory files into /tmp instead of /dev/shm,
       // because Docker’s default for /dev/shm is 64MB
       //'--disable-dev-shm-usage'
-    ]
+    ],
+    userAgent: userAgent
   })
   const page = await browser.newPage()
   const tracker = new InflightRequests(page);
@@ -89,7 +91,8 @@ const debug = false;
   if(debug===true){
     await page.setRequestInterception(true);
   }
-
+  
+  await page.setUserAgent(userAgent);
 
   page
     .on('console', async msg => {
@@ -152,6 +155,9 @@ const debug = false;
   try {
     let howManyLooped = 0
     let howManySecondsPuppeting = 0
+    await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36');
+    
+    await spinTimer(10);
     for(;;) {
       var t0 = performance.now()
       await page.goto('https://www.strava.com/dashboard/following/300', {
@@ -162,12 +168,24 @@ const debug = false;
           console.log(inflight.map(request => '  ' + request.url()).join('\n'))
       });
       tracker.dispose();
+      
+      console.log(await browser.userAgent());
       console.log('Got to strava')
 
       try {
         await page.waitForSelector('#login-button', {
           timeout: 2000
         })
+        try {
+          await page.waitForSelector('#stravaCookieBanner', {
+            timeout: 2000
+          })
+          await page.click('.btn-accept-cookie-banner')
+          console.log('Clicked Cookie Button')
+        } catch (error) {
+          console.log("Looks like we've already agreed to cookies")
+        }
+  
 
         await page.click('#email')
         await page.keyboard.type(username)
