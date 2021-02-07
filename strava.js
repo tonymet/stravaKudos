@@ -63,7 +63,7 @@ class InflightRequests {
 
 require('console-stamp')(console, '[HH:MM:ss.l]');
 
-const puppeteer = require('puppeteer')
+const puppeteer = require('puppeteer-core')
 const request_client = require('request-promise-native');
 const chalk = require('chalk');
 const userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36'
@@ -75,9 +75,11 @@ const debug = false;
   const browser = await puppeteer.launch({
     userDataDir: '/tmp/user-data-dir',
     headless: headless,
+    executablePath: '/usr/bin/google-chrome-unstable',
     args: [
       // Required for Docker version of Puppeteer
       '--no-sandbox',
+
       //'--disable-setuid-sandbox',
       // This will write shared memory files into /tmp instead of /dev/shm,
       // because Docker’s default for /dev/shm is 64MB
