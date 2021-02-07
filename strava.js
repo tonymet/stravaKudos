@@ -19,6 +19,11 @@ const {
 } = require('perf_hooks');
 
 async function spinTimer (timeToWait) {
+  if(! process.stdout.isTTY ) {
+    console.log(`Waiting ${timeToWait} seconds...`);
+    await new Promise(resolve => setTimeout(resolve, timeToWait * 1000));
+    return;
+  }
   const CLI = require('clui');
   const Spinner = CLI.Spinner;
 
@@ -87,6 +92,36 @@ function resourceTypeBlock (resourceType) {
 }
 function resourceTypeKeep (resourceType) {
   return resourceType === 'document' || resourceType === 'xhr';
+}
+
+async function doCookieBanner(page){
+  try {
+    await page.waitForSelector('#stravaCookieBanner', {
+      timeout: 2000
+    });
+    await page.click('.btn-accept-cookie-banner');
+    console.log('Clicked Cookie Button');
+  } catch (error) {
+    console.log("Looks like we've already agreed to cookies");
+  }
+}
+
+async function doLogin(page){
+  await page.click('#email');
+  await page.keyboard.type(username);
+  console.log('Entered Username');
+
+  await page.click('#password');
+  await page.keyboard.type(password);
+  console.log('Entered Password');
+
+  await page.click('#login-button');
+  console.log('Submitted Form');
+
+  await page.waitForNavigation({
+    waitUntil: 'networkidle2',
+    timeout: 3000000
+  });
 }
 
 (async () => {
@@ -207,31 +242,8 @@ function resourceTypeKeep (resourceType) {
         await page.waitForSelector('#login-button', {
           timeout: 2000
         });
-        try {
-          await page.waitForSelector('#stravaCookieBanner', {
-            timeout: 2000
-          });
-          await page.click('.btn-accept-cookie-banner');
-          console.log('Clicked Cookie Button');
-        } catch (error) {
-          console.log("Looks like we've already agreed to cookies");
-        }
-
-        await page.click('#email');
-        await page.keyboard.type(username);
-        console.log('Entered Username');
-
-        await page.click('#password');
-        await page.keyboard.type(password);
-        console.log('Entered Password');
-
-        await page.click('#login-button');
-        console.log('Submitted Form');
-
-        await page.waitForNavigation({
-          waitUntil: 'networkidle2',
-          timeout: 3000000
-        });
+        await doCookieBanner(page);
+        await doLogin(page);
         console.log('Waited Now Kudo');
       } catch (error) {
         console.log('Looks like we were already logged in :D.');
