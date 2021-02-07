@@ -6,8 +6,12 @@
  * `STRAVA_USER=myuser STRAVA_PWD=mypassword node strava.js`
  *
  */
+const fs = require('fs')
 
-const secrets = require('./secrets.json');
+ let secrets = {};
+ if (fs.existsSync('./secrets.json')){
+   secrets = require('./secrets.json')
+ }
 
 const username = (process.env.STRAVA_USER || secrets.STRAVA_USER);
 const password = (process.env.STRAVA_PWD || secrets.STRAVA_PWD);
