@@ -12,6 +12,8 @@ const secrets = require("./secrets.json")
 const username = (process.env.STRAVA_USER || secrets.STRAVA_USER)
 const password = (process.env.STRAVA_PWD || secrets.STRAVA_PWD)
 
+const INIT_WAIT_TIME = 3;
+
 const {
   performance,
   PerformanceObserver
@@ -70,6 +72,25 @@ const userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, li
 
 const debug = false;
 
+async function interceptNeedlessRequests(page){
+  await page.setRequestInterception(true);
+    page.on('request', (req) => {
+        if( resourceTypeBlock(req.resourceType()) ){
+            req.abort();
+        }
+        else {
+            req.continue();
+        }
+    })
+}
+
+function resourceTypeBlock(resourceType){
+  return resourceType == 'image' || resourceType == 'stylesheet'
+}
+function resourceTypeKeep(resourceType){
+  return resourceType == 'document' || resourceType == 'xhr'
+}
+
 (async () => {
   const headless = !(debug === true)
   const browser = await puppeteer.launch({
@@ -87,7 +108,8 @@ const debug = false;
     ],
     userAgent: userAgent
   })
-  const page = await browser.newPage()
+  const page = await browser.newPage();
+  await interceptNeedlessRequests(page);
   const tracker = new InflightRequests(page);
 
   if(debug===true){
@@ -120,10 +142,18 @@ const debug = false;
       })
     })
     .on('pageerror', ({ message }) => console.log(chalk.red(message)))
-    .on('response', response =>
-      console.log(chalk.green(`${response.status()} ${response.url()}`)))
-    .on('requestfailed', request =>
-      console.log(chalk.magenta(`${request.failure().errorText} ${request.url()}`)));
+    .on('response', response =>{
+      let resourceType = response.request().resourceType();
+      if( resourceTypeKeep(resourceType) ){
+        console.log(chalk.green(`${response.status()} ${response.url()}`))
+      }
+    })
+    .on('requestfailed', request =>{
+      let resourceType = request.resourceType();
+      if(resourceTypeKeep(resourceType)){
+        console.log(chalk.magenta(`${request.failure().errorText} ${request.url()}`));
+      }
+    })
     if(debug==true){
       page.on('request', request => {
           request_client({
@@ -159,7 +189,7 @@ const debug = false;
     let howManySecondsPuppeting = 0
     await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36');
     
-    await spinTimer(10);
+    await spinTimer(INIT_WAIT_TIME);
     for(;;) {
       var t0 = performance.now()
       await page.goto('https://www.strava.com/dashboard/following/300', {
