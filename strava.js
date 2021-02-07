@@ -85,7 +85,7 @@ async function interceptNeedlessRequests(page){
 }
 
 function resourceTypeBlock(resourceType){
-  return resourceType == 'image' || resourceType == 'stylesheet'
+  return resourceType == 'image' || resourceType == 'stylesheet' || resourceType == 'font'
 }
 function resourceTypeKeep(resourceType){
   return resourceType == 'document' || resourceType == 'xhr'
