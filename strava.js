@@ -199,36 +199,6 @@ async function doLogin(page){
         console.log(chalk.magenta(`${request.failure().errorText} ${request.url()}`));
       }
     });
-  if (debug === true) {
-    page.on('request', request => {
-      requestClient({
-        uri: request.url(),
-        resolveWithFullResponse: true
-      }).then(response => {
-        // if(debug===true && request.url() == "https://www.strava.com/session") {
-        //   console.log("REQUEST_URL")
-        //   console.log(chalk.magenta(request.url()));
-        //   const request_headers = request.headers();
-        //   console.log("REQUEST_HEADERS");
-        //   console.log(request.headers());
-        //   console.log("POST_DATA");
-        //   console.log(request.postData());
-        //   console.log("RESPONSE_HEADERS")
-        //   const response_headers = response.headers;
-        //   console.log(response_headers);
-        //   console.log("RESPONSE");
-        //   console.log(response)
-        //   console.log("RESPONSE_LENGTH");
-        //   console.log(chalk.magenta(response_headers['content-length']));
-        // }300
-        request.continue();
-      }).catch(error => {
-        console.error(error);
-        request.abort();
-      });
-    });
-  }
-
   try {
     let howManyLooped = 0;
     let howManySecondsPuppeting = 0;
