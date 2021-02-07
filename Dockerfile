@@ -19,6 +19,7 @@ RUN npm ci --no-scripts --production\
     && chown -R pptruser:pptruser /home/pptruser \
     && chown -R pptruser:pptruser /node_modules
 
+RUN sh -c "echo '{}' >> secrets.json"
 # Run everything after as non-privileged user.
 USER pptruser
 
