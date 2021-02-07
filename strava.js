@@ -120,6 +120,14 @@ async function doLogin(page){
   console.log('Entered Password');
 
   await page.click('#login-button');
+  try{
+    await page.waitForSelector('.alert-message', {timeout: 500})
+    console.error("login failed")
+    process.exit(-1)
+  }
+  catch {
+    // we are good
+  }
   console.log('Submitted Form');
 
   await page.waitForNavigation({
