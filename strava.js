@@ -6,12 +6,12 @@
  * `STRAVA_USER=myuser STRAVA_PWD=mypassword node strava.js`
  *
  */
-const fs = require('fs')
+const fs = require('fs');
 
- let secrets = {};
- if (fs.existsSync('./secrets.json')){
-   secrets = require('./secrets.json')
- }
+let secrets = {};
+if (fs.existsSync('./secrets.json')) {
+  secrets = require('./secrets.json');
+}
 
 const username = (process.env.STRAVA_USER || secrets.STRAVA_USER);
 const password = (process.env.STRAVA_PWD || secrets.STRAVA_PWD);
@@ -23,7 +23,7 @@ const {
 } = require('perf_hooks');
 
 async function spinTimer (timeToWait) {
-  if(! process.stdout.isTTY ) {
+  if (!process.stdout.isTTY) {
     console.log(`Waiting ${timeToWait} seconds...`);
     await new Promise(resolve => setTimeout(resolve, timeToWait * 1000));
     return;
@@ -74,7 +74,6 @@ class InflightRequests {
 require('console-stamp')(console, '[HH:MM:ss.l]');
 
 const puppeteer = require('puppeteer-core');
-const requestClient = require('request-promise-native');
 const chalk = require('chalk');
 const userAgent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36';
 
@@ -83,7 +82,7 @@ const debug = false;
 async function interceptNeedlessRequests (page) {
   await page.setRequestInterception(true);
   page.on('request', (req) => {
-    if (resourceTypeBlock(req.resourceType())) {
+    if (resourceTypeBlock(req.resourceType()) || urlBlock(req.url())) {
       req.abort();
     } else {
       req.continue();
@@ -97,8 +96,14 @@ function resourceTypeBlock (resourceType) {
 function resourceTypeKeep (resourceType) {
   return resourceType === 'document' || resourceType === 'xhr';
 }
+function urlBlock (url) {
+  const urls = [
+    'https://www.strava.com/logging/v2/events'
+  ];
+  return urls.includes(url);
+}
 
-async function doCookieBanner(page){
+async function doCookieBanner (page) {
   try {
     await page.waitForSelector('#stravaCookieBanner', {
       timeout: 2000
@@ -110,7 +115,7 @@ async function doCookieBanner(page){
   }
 }
 
-async function doLogin(page){
+async function doLogin (page) {
   await page.click('#email');
   await page.keyboard.type(username);
   console.log('Entered Username');
@@ -120,12 +125,11 @@ async function doLogin(page){
   console.log('Entered Password');
 
   await page.click('#login-button');
-  try{
-    await page.waitForSelector('.alert-message', {timeout: 500})
-    console.error("login failed")
-    process.exit(-1)
-  }
-  catch {
+  try {
+    await page.waitForSelector('.alert-message', { timeout: 500 });
+    console.error('login failed');
+    process.exit(-1);
+  } catch {
     // we are good
   }
   console.log('Submitted Form');
