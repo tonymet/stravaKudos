@@ -198,6 +198,9 @@ async function doLogin (page) {
       }
     })
     .on('requestfailed', request => {
+      if (urlBlock(request.url())) {
+        return;
+      }
       const resourceType = request.resourceType();
       if (resourceTypeKeep(resourceType)) {
         console.log(chalk.magenta(`${request.failure().errorText} ${request.url()}`));
