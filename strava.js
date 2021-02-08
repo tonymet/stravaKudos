@@ -79,12 +79,22 @@ const debug = false;
 async function interceptNeedlessRequests (page) {
   await page.setRequestInterception(true);
   page.on('request', (req) => {
-    if (resourceTypeBlock(req.resourceType()) || urlBlock(req.url())) {
-      req.abort();
-    } else {
+    if (requestScreen(req)) {
       req.continue();
+    } else {
+      req.abort();
     }
   });
+}
+
+
+function requestScreen(req) {
+  if (urlBlock(req.url()) || resourceTypeBlock(req.resourceType())){
+    return false;
+  } else if (resourceTypeKeep(req.resourceType())){
+    return true;
+  }
+  return true
 }
 
 function resourceTypeBlock (resourceType) {
@@ -132,17 +142,12 @@ function pageConfigureConsole (page) {
   })
     .on('pageerror', ({ message }) => console.log(chalk.red(message)))
     .on('response', response => {
-      const resourceType = response.request().resourceType();
-      if (resourceTypeKeep(resourceType)) {
+      if (requestScreen(response.request())) {
         console.log(chalk.green(`${response.status()} ${response.url()}`));
       }
     })
     .on('requestfailed', request => {
-      if (urlBlock(request.url())) {
-        return;
-      }
-      const resourceType = request.resourceType();
-      if (resourceTypeKeep(resourceType)) {
+      if (requestScreen(request)) {
         console.log(chalk.magenta(`${request.failure().errorText} ${request.url()}`));
       }
     });
