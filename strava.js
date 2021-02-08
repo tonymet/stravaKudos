@@ -181,7 +181,7 @@ async function doLogin (page) {
 
   await page.waitForNavigation({
     waitUntil: 'networkidle2',
-    timeout: 5000
+    timeout: 20000
   });
 }
 
@@ -235,6 +235,7 @@ async function doLogin (page) {
         console.log('Waited Now Kudo');
       } catch (error) {
         console.log('Looks like we were already logged in :D.');
+        console.log('error: ', error);
       }
 
       // const cookies = await page.cookies()
