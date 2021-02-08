@@ -98,9 +98,57 @@ function resourceTypeKeep (resourceType) {
 }
 function urlBlock (url) {
   const urls = [
-    'https://www.strava.com/logging/v2/events'
+    'https://www.strava.com/logging/v2/events',
+    'doubleclick.net',
+    'branch.io'
   ];
-  return urls.includes(url);
+  for (let i = 0; i < urls.length; i++) {
+    if (url.indexOf(urls[i]) >= 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function pageConfigureConsole (page) {
+  page.on('console', async msg => {
+    const args = await msg.args();
+
+    args.forEach(async (arg) => {
+      const val = await arg.jsonValue();
+      // value is serializable
+      if (JSON.stringify(val) !== JSON.stringify({})) console.log(val);
+      // value is unserializable (or an empty oject)
+      else {
+        const { type, subtype, description } = arg._remoteObject;
+        const colorType = subtype.substr(0, 3).toUpperCase();
+        const colors = {
+          LOG: text => text,
+          ERR: chalk.red,
+          WAR: chalk.yellow,
+          INF: chalk.cyan
+        };
+        const color = colors[colorType] || chalk.blue;
+        console.log(color(`type: ${type}, subtype: ${subtype}, description:\n ${description}`));
+      }
+    });
+  })
+    .on('pageerror', ({ message }) => console.log(chalk.red(message)))
+    .on('response', response => {
+      const resourceType = response.request().resourceType();
+      if (resourceTypeKeep(resourceType)) {
+        console.log(chalk.green(`${response.status()} ${response.url()}`));
+      }
+    })
+    .on('requestfailed', request => {
+      if (urlBlock(request.url())) {
+        return;
+      }
+      const resourceType = request.resourceType();
+      if (resourceTypeKeep(resourceType)) {
+        console.log(chalk.magenta(`${request.failure().errorText} ${request.url()}`));
+      }
+    });
 }
 
 async function doCookieBanner (page) {
@@ -166,46 +214,7 @@ async function doLogin (page) {
   }
 
   await page.setUserAgent(userAgent);
-
-  page
-    .on('console', async msg => {
-      const args = await msg.args();
-
-      args.forEach(async (arg) => {
-        const val = await arg.jsonValue();
-        // value is serializable
-        if (JSON.stringify(val) !== JSON.stringify({})) console.log(val);
-        // value is unserializable (or an empty oject)
-        else {
-          const { type, subtype, description } = arg._remoteObject;
-          const colorType = subtype.substr(0, 3).toUpperCase();
-          const colors = {
-            LOG: text => text,
-            ERR: chalk.red,
-            WAR: chalk.yellow,
-            INF: chalk.cyan
-          };
-          const color = colors[colorType] || chalk.blue;
-          console.log(color(`type: ${type}, subtype: ${subtype}, description:\n ${description}`));
-        }
-      });
-    })
-    .on('pageerror', ({ message }) => console.log(chalk.red(message)))
-    .on('response', response => {
-      const resourceType = response.request().resourceType();
-      if (resourceTypeKeep(resourceType)) {
-        console.log(chalk.green(`${response.status()} ${response.url()}`));
-      }
-    })
-    .on('requestfailed', request => {
-      if (urlBlock(request.url())) {
-        return;
-      }
-      const resourceType = request.resourceType();
-      if (resourceTypeKeep(resourceType)) {
-        console.log(chalk.magenta(`${request.failure().errorText} ${request.url()}`));
-      }
-    });
+  pageConfigureConsole(page);
   try {
     let howManyLooped = 0;
     let howManySecondsPuppeting = 0;
