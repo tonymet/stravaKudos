@@ -17,10 +17,7 @@ const username = (process.env.STRAVA_USER || secrets.STRAVA_USER);
 const password = (process.env.STRAVA_PWD || secrets.STRAVA_PWD);
 
 const INIT_WAIT_TIME = 3;
-
-const {
-  performance
-} = require('perf_hooks');
+const WAIT_CEILING = 1800;
 
 async function spinTimer (timeToWait) {
   if (!process.stdout.isTTY) {
@@ -184,7 +181,7 @@ async function doLogin (page) {
 
   await page.waitForNavigation({
     waitUntil: 'networkidle2',
-    timeout: 3000000
+    timeout: 5000
   });
 }
 
@@ -208,21 +205,14 @@ async function doLogin (page) {
   const page = await browser.newPage();
   await interceptNeedlessRequests(page);
   const tracker = new InflightRequests(page);
-
-  if (debug === true) {
-    await page.setRequestInterception(true);
-  }
-
   await page.setUserAgent(userAgent);
   pageConfigureConsole(page);
   try {
     let howManyLooped = 0;
-    let howManySecondsPuppeting = 0;
     await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36');
 
     await spinTimer(INIT_WAIT_TIME);
     for (;;) {
-      const t0 = performance.now();
       await page.goto('https://www.strava.com/dashboard/following/300', {
         waitUntil: 'networkidle2',
         timeout: 3000000
@@ -266,20 +256,9 @@ async function doLogin (page) {
         }
         console.log(howManyClicked);
       });
-      // if (debug === true) {page.waitForSelectora.png', fullPage: true })
-      //   await new Promise(resolve => setTimeout(resolve, 5000))
-      // }
-      const ceiling = 1800;
-      const weWillWait = Math.floor(Math.random() * ceiling) + 1;
-      const t1 = performance.now();
-
-      if (howManySecondsPuppeting !== 0) {
-        const averagePupeteeringTime = howManySecondsPuppeting / howManyLooped;
-        console.log(`Average Pupeteering Time ${averagePupeteeringTime} milliseconds`);
-      }
+      const weWillWait = Math.floor(Math.random() * WAIT_CEILING) + 1;
       console.log(`we will wait ${weWillWait} seconds`);
       await spinTimer(weWillWait);
-      howManySecondsPuppeting += (t1 - t0);
       howManyLooped++;
       console.log(`we've looped ${howManyLooped}`);
     }
