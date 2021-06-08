@@ -161,6 +161,14 @@ async function doCookieBanner (page) {
 }
 
 async function doLogin (page) {
+  await page.goto('https://www.strava.com/login', {
+    waitUntil: 'networkidle2',
+    timeout: 3000000
+  }).catch(e => {
+    console.log('Navigation failed: ' + e.message);
+    const inflight = tracker.inflightRequests();
+    console.log(inflight.map(request => '  ' + request.url()).join('\n'));
+  });
   await page.click('#email');
   await page.keyboard.type(username);
   console.log('Entered Username');
@@ -185,6 +193,23 @@ async function doLogin (page) {
   });
 }
 
+async function doClickKudos (page) {
+  await page.evaluate(() => {
+    let howManyClicked = 0;
+    const kudosButtons = Array.from(document.querySelectorAll('button.js-add-kudo'));
+    for (let i = 0; i < kudosButtons.length; i++) {
+      try {
+        console.log(`clicking ${i}`);
+        howManyClicked++;
+        kudosButtons[i].click();
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    console.log({ howManyClicked });
+  });
+}
+
 (async () => {
   const headless = !(debug === true);
   const browser = await puppeteer.launch({
@@ -194,7 +219,6 @@ async function doLogin (page) {
     args: [
       // Required for Docker version of Puppeteer
       '--no-sandbox'
-
       // '--disable-setuid-sandbox',
       // This will write shared memory files into /tmp instead of /dev/shm,
       // because Docker’s default for /dev/shm is 64MB
@@ -207,6 +231,7 @@ async function doLogin (page) {
   const tracker = new InflightRequests(page);
   await page.setUserAgent(userAgent);
   pageConfigureConsole(page);
+  await doLogin(page);
   try {
     let howManyLooped = 0;
     await page.setUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36');
@@ -222,41 +247,10 @@ async function doLogin (page) {
         console.log(inflight.map(request => '  ' + request.url()).join('\n'));
       });
       tracker.dispose();
-
       console.log(await browser.userAgent());
       console.log('Got to strava');
-
-      try {
-        await page.waitForSelector('#login-button', {
-          timeout: 2000
-        });
-        await doCookieBanner(page);
-        await doLogin(page);
-        console.log('Waited Now Kudo');
-      } catch (error) {
-        console.log('Looks like we were already logged in :D.');
-        console.log('error: ', error);
-      }
-
-      // const cookies = await page.cookies()
-      // console.log(b4cookies)
-      // process.exit(0);
-
       console.log('Lets Click Some Buttons');
-      await page.evaluate(() => {
-        let howManyClicked = 0;
-        const kudosButtons = Array.from(document.querySelectorAll('button.js-add-kudo'));
-        for (let i = 0; i < kudosButtons.length; i++) {
-          try {
-            console.log(`clicking ${i}`);
-            howManyClicked++;
-            kudosButtons[i].click();
-          } catch (error) {
-            console.log(error);
-          }
-        }
-        console.log(howManyClicked);
-      });
+      doClickKudos(page);
       const weWillWait = Math.floor(Math.random() * WAIT_CEILING) + 1;
       console.log(`we will wait ${weWillWait} seconds`);
       await spinTimer(weWillWait);
