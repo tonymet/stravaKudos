@@ -1,14 +1,18 @@
-FROM node:14.7-stretch-slim
+FROM node:16-buster-slim
 
 RUN apt-get update \
-    && apt-get install -y wget gnupg libxss1 \
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-    && apt-get update \
-    && apt-get install -y google-chrome-unstable \
-      --no-install-recommends \
+    && apt-get install -y wget gnupg libxss1 chromium \
+    # && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    # && sh -c 'echo "deb [arch=armhf] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+    ## && apt-get update \
+    # && apt-get install -y google-chrome\
+    ##  --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
+#RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    #&& sh -c 'echo "deb [arch=armhf] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+  #  && sh -c 'echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+    #&& apt-get install -y google-chrome-unstable
 ADD package*.json /
 
 RUN npm ci --no-scripts --production\
