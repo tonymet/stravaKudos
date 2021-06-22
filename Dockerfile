@@ -1,12 +1,28 @@
 FROM node:16-buster-slim
 
+ARG TARGETARCH
+
+RUN echo "TARGETARCH = $TARGETARCH"
 RUN apt-get update \
-    && apt-get install -y wget gnupg libxss1 chromium \
-    # && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    # && sh -c 'echo "deb [arch=armhf] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-    ## && apt-get update \
-    # && apt-get install -y google-chrome\
-    ##  --no-install-recommends \
+    && apt-get install -y wget gnupg libxss1; \
+	# google builds only for amd64 -- use open source chromium otherwise
+	case $TARGETARCH in \
+		arm) \
+			apt-get install -y chromium \
+			;;\
+		amd64) \
+			wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - ;\
+			sh -c 'echo "deb [arch=armhf] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' ;\
+			apt-get update; \
+			apt-get install -y google-chrome-unstable;\
+			#symlink for strava.js
+			ln -s /usr/bin/google-chrome-unstable /usr/bin/chromium
+			;; \
+		*) \
+			echo "$TARGETARCH not supported"; \
+			exit 1\
+			;;\
+	esac\
     && rm -rf /var/lib/apt/lists/*
 
 #RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
