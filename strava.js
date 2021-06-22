@@ -190,7 +190,7 @@ async function doLogin (page) {
   const browser = await puppeteer.launch({
     userDataDir: '/tmp/user-data-dir',
     headless: headless,
-    executablePath: '/usr/bin/google-chrome-unstable',
+    executablePath: '/usr/bin/chromium',
     args: [
       // Required for Docker version of Puppeteer
       '--no-sandbox'

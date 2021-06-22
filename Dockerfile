@@ -1,12 +1,24 @@
-FROM node:14.7-stretch-slim
-
+FROM node:16-buster-slim
+ARG TARGETARCH amd64
 RUN apt-get update \
-    && apt-get install -y wget gnupg libxss1 \
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-    && apt-get update \
-    && apt-get install -y google-chrome-unstable \
-      --no-install-recommends \
+    && apt-get install -y wget gnupg libxss1; \
+	# google builds only for amd64 -- use open source chromium otherwise
+	case $TARGETARCH in \
+		arm) \
+			apt-get install -y chromium \
+			;;\
+		amd64) \
+			wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - ;\
+			sh -c 'echo "deb [arch=$TARGETARCH] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' ;\
+			apt-get update; \
+			apt-get install -y google-chrome-unstable; \
+			ln -s /usr/bin/google-chrome-unstable /usr/bin/chromium \
+			;; \
+		*) \
+			echo "$TARGETARCH not supported"; \
+			exit 1\
+			;;\
+	esac\
     && rm -rf /var/lib/apt/lists/*
 
 ADD package*.json /
