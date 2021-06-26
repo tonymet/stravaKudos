@@ -1,5 +1,5 @@
 FROM node:16-buster-slim
-ARG TARGETARCH amd64
+ARG TARGETARCH=amd64
 RUN apt-get update \
     && apt-get install -y wget gnupg libxss1; \
 	# google builds only for amd64 -- use open source chromium otherwise
